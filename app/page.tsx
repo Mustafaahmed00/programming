@@ -1,6 +1,6 @@
 'use client'
 
-import { CheckCircle, Zap, Clock, Award, TrendingUp, Target, Calendar, BarChart3, Activity, BookOpen, Users, Star } from 'lucide-react'
+import { CheckCircle, Zap, Clock, Award, TrendingUp, Target, Calendar, BarChart3, Activity, BookOpen, Users, Star, Trophy } from 'lucide-react'
 import { problems } from '@/data/problems'
 
 export default function Home() {
@@ -277,6 +277,30 @@ export default function Home() {
             <Star className="h-8 w-8 text-warning-600 mx-auto mb-3" />
             <h3 className="font-semibold text-gray-900 mb-1">Leaderboard</h3>
             <p className="text-sm text-gray-600">Compete and rank up</p>
+          </div>
+        </div>
+
+        {/* Learn from Champions */}
+        <div className="mt-8">
+          <div className="card bg-gradient-to-r from-purple-500 to-pink-600 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold mb-2">Learn from Champions</h2>
+                <p className="text-purple-100 mb-4">Discover how top competitive programmers think and approach problems</p>
+                <button className="px-6 py-3 bg-white text-purple-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors">
+                  Explore Champions →
+                </button>
+              </div>
+              <div className="hidden md:block">
+                <div className="flex items-center space-x-2 text-purple-100">
+                  <Trophy className="h-8 w-8" />
+                  <div>
+                    <div className="text-sm font-medium">Petr, Tourist, rng_58</div>
+                    <div className="text-xs">World Champions</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

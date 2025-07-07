@@ -21,6 +21,7 @@ const navLinks = [
   { href: '/companies', label: 'Companies' },
   { href: '/leaderboard', label: 'Leaderboard' },
   { href: '/forum', label: 'Forum' },
+  { href: '/competitive-programmers', label: 'Champions' },
 ]
 
 export default function RootLayout({
