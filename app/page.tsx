@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { CheckCircle, Zap, Clock, Award, TrendingUp, Target, Calendar, BarChart3, Activity, BookOpen, Users, Star, Trophy, Play, Video, Users2 } from 'lucide-react'
 import { problems } from '@/data/problems'
 import dynamic from 'next/dynamic'
@@ -12,10 +13,24 @@ const VideoExplanations = dynamic(() => import('@/components/VideoExplanations')
 
 export default function Home() {
   const [isClient, setIsClient] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     setIsClient(true)
   }, [])
+
+  // Navigation handlers
+  const handleViewContests = () => {
+    router.push('/contests')
+  }
+
+  const handleWatchVideos = () => {
+    router.push('/videos')
+  }
+
+  const handleViewAnalytics = () => {
+    router.push('/analytics')
+  }
 
   // Simulate user stats based on problems data
   const total = problems.length
@@ -127,7 +142,21 @@ export default function Home() {
         {/* Enhanced Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {stats.map((stat, index) => (
-            <div key={index} className="card">
+            <div 
+              key={index} 
+              className="card hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-105"
+              onClick={() => {
+                if (stat.label === 'Problems Solved') {
+                  router.push('/practice/enhanced')
+                } else if (stat.label === 'Current Streak') {
+                  router.push('/analytics')
+                } else if (stat.label === 'Total Time') {
+                  router.push('/analytics')
+                } else if (stat.label === 'Global Ranking') {
+                  router.push('/contests')
+                }
+              }}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">{stat.label}</p>
@@ -141,8 +170,8 @@ export default function Home() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="card p-6 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="card p-6 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-105" onClick={handleViewContests}>
             <div className="flex items-center space-x-3">
               <div className="p-3 bg-blue-500 rounded-lg">
                 <Play className="h-6 w-6 text-white" />
@@ -157,7 +186,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="card p-6 bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+          <div className="card p-6 bg-gradient-to-br from-green-50 to-green-100 border-green-200 hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-105" onClick={handleWatchVideos}>
             <div className="flex items-center space-x-3">
               <div className="p-3 bg-green-500 rounded-lg">
                 <Video className="h-6 w-6 text-white" />
@@ -172,7 +201,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="card p-6 bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+          <div className="card p-6 bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-105" onClick={handleViewAnalytics}>
             <div className="flex items-center space-x-3">
               <div className="p-3 bg-purple-500 rounded-lg">
                 <BarChart3 className="h-6 w-6 text-white" />
@@ -184,6 +213,21 @@ export default function Home() {
             </div>
             <div className="mt-4">
               <button className="btn-primary w-full">View Analytics</button>
+            </div>
+          </div>
+
+          <div className="card p-6 bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-105" onClick={() => router.push('/practice/enhanced')}>
+            <div className="flex items-center space-x-3">
+              <div className="p-3 bg-orange-500 rounded-lg">
+                <BookOpen className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Practice Problems</h3>
+                <p className="text-sm text-gray-600">Solve coding challenges</p>
+              </div>
+            </div>
+            <div className="mt-4">
+              <button className="btn-primary w-full">Start Practice</button>
             </div>
           </div>
         </div>
@@ -199,7 +243,11 @@ export default function Home() {
           </div>
           <div className="flex items-end justify-between space-x-2">
             {weeklyProgressData.map((day, index) => (
-              <div key={index} className="flex-1 text-center">
+              <div 
+                key={index} 
+                className="flex-1 text-center cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => router.push('/practice/enhanced')}
+              >
                 <div className="relative">
                   <div className="h-24 bg-gray-200 rounded-t-lg relative">
                     <div 
@@ -212,6 +260,14 @@ export default function Home() {
                 </div>
               </div>
             ))}
+          </div>
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <button 
+              onClick={() => router.push('/analytics')}
+              className="text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors"
+            >
+              View Detailed Progress →
+            </button>
           </div>
         </div>
 
@@ -273,7 +329,11 @@ export default function Home() {
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
             <div className="space-y-3">
               {recentActivity.map((activity, index) => (
-                <div key={index} className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded-lg transition-colors">
+                <div 
+                  key={index} 
+                  className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"
+                  onClick={() => router.push('/practice/enhanced')}
+                >
                   {getActivityIcon(activity.type)}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 truncate">{activity.problem}</p>
@@ -288,6 +348,14 @@ export default function Home() {
                 </div>
               ))}
             </div>
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <button 
+                onClick={() => router.push('/practice/enhanced')}
+                className="text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors"
+              >
+                View All Activity →
+              </button>
+            </div>
           </div>
 
           {/* Learning Path Progress */}
@@ -295,7 +363,11 @@ export default function Home() {
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Learning Path</h2>
             <div className="space-y-4">
               {learningPath.map((path, index) => (
-                <div key={index}>
+                <div 
+                  key={index} 
+                  className="cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                  onClick={() => router.push('/courses')}
+                >
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-gray-700">{path.topic}</span>
                     <span className={`text-xs font-medium ${getStatusColor(path.status)}`}>
@@ -314,6 +386,14 @@ export default function Home() {
                   </div>
                 </div>
               ))}
+            </div>
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <button 
+                onClick={() => router.push('/courses')}
+                className="text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors"
+              >
+                Continue Learning →
+              </button>
             </div>
           </div>
         </div>
