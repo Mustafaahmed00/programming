@@ -107,7 +107,7 @@ export default function CompaniesPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [difficultyFilter, setDifficultyFilter] = useState('All')
   const [sortBy, setSortBy] = useState('problemCount')
-  const [selectedCompany, setSelectedCompany] = useState(null)
+  const [selectedCompany, setSelectedCompany] = useState<any>(null)
   const [showProblems, setShowProblems] = useState(false)
   const [showResources, setShowResources] = useState(false)
 
@@ -163,13 +163,13 @@ export default function CompaniesPage() {
 
   const stats = getStats()
 
-  const handleCompanyClick = (company) => {
+  const handleCompanyClick = (company: any) => {
     setSelectedCompany(company)
     setShowProblems(false)
     setShowResources(false)
   }
 
-  const handlePracticeProblems = (companyName) => {
+  const handlePracticeProblems = (companyName: string) => {
     // Navigate to practice page with company-specific problems
     window.location.href = `/practice/enhanced?company=${encodeURIComponent(companyName)}`
   }
@@ -409,7 +409,7 @@ export default function CompaniesPage() {
                   <div>
                     <h3 className="text-xl font-semibold mb-4">Common Interview Problems</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {companyProblems[selectedCompany.name]?.map((problem, index) => (
+                      {companyProblems[selectedCompany?.name as keyof typeof companyProblems]?.map((problem: any, index: number) => (
                         <div key={index} className="card p-4">
                           <div className="flex items-center justify-between mb-2">
                             <h4 className="font-semibold text-gray-900">{problem.title}</h4>
@@ -428,7 +428,7 @@ export default function CompaniesPage() {
                     </div>
                     <div className="mt-6">
                       <button
-                        onClick={() => handlePracticeProblems(selectedCompany.name)}
+                        onClick={() => handlePracticeProblems(selectedCompany?.name || '')}
                         className="btn-primary flex items-center space-x-2"
                       >
                         <Play className="h-4 w-4" />
@@ -443,7 +443,7 @@ export default function CompaniesPage() {
                   <div>
                     <h3 className="text-xl font-semibold mb-4">Free Study Resources</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {freeResources[selectedCompany.name]?.map((resource, index) => (
+                      {freeResources[selectedCompany?.name as keyof typeof freeResources]?.map((resource: any, index: number) => (
                         <div key={index} className="card p-4">
                           <div className="flex items-center justify-between mb-2">
                             <h4 className="font-semibold text-gray-900">{resource.title}</h4>
