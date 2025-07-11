@@ -374,22 +374,27 @@ export default function Home() {
 
         {/* Enhanced Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {statsData.map((stat, index) => (
-            <div 
-              key={index} 
-              className="card hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-105"
-              onClick={handleStatCardClickDirect.bind(null, stat)}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">{stat.label}</p>
-                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                  <p className="text-xs text-success-600 font-medium">{stat.change}</p>
+          {statsData.map((stat, index) => {
+            const handleClick = () => {
+              handleStatsClick(stat.label)
+            }
+            return (
+              <div 
+                key={index} 
+                className="card hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-105"
+                onClick={handleClick}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">{stat.label}</p>
+                    <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                    <p className="text-xs text-success-600 font-medium">{stat.change}</p>
+                  </div>
+                  <stat.icon className={`h-8 w-8 ${stat.color}`} />
                 </div>
-                <stat.icon className={`h-8 w-8 ${stat.color}`} />
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
 
         {/* Quick Actions */}
