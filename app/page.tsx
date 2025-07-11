@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { CheckCircle, Zap, Clock, Award, TrendingUp, Target, Calendar, BarChart3, Activity, BookOpen, Users, Star, Trophy, Play, Video, Users2 } from 'lucide-react'
 import { problems } from '@/data/problems'
+import { ProgressTracker, UserProgress } from '@/lib/progress'
 import dynamic from 'next/dynamic'
 
 // Dynamically import components with no SSR to avoid hydration issues
@@ -13,11 +15,20 @@ const VideoExplanations = dynamic(() => import('@/components/VideoExplanations')
 
 export default function Home() {
   const [isClient, setIsClient] = useState(false)
+  const [userProgress, setUserProgress] = useState<UserProgress | null>(null)
   const router = useRouter()
+  const { data: session, status } = useSession()
 
   useEffect(() => {
     setIsClient(true)
   }, [])
+
+  useEffect(() => {
+    if (isClient && session?.user?.email) {
+      const progress = ProgressTracker.getProgress(session.user.email)
+      setUserProgress(progress)
+    }
+  }, [isClient, session])
 
   // Navigation handlers
   const handleViewContests = () => {
@@ -32,63 +43,163 @@ export default function Home() {
     router.push('/analytics')
   }
 
-  // Simulate user stats based on problems data
-  const total = problems.length
-  const easy = problems.filter(p => p.difficulty === 'Easy').length
-  const medium = problems.filter(p => p.difficulty === 'Medium').length
-  const hard = problems.filter(p => p.difficulty === 'Hard').length
-  const solved = Math.floor(total * 0.6)
-  const attempted = Math.floor(total * 0.2)
-  const streak = 7
-  const totalTime = '12h 45m'
-  const ranking = '#1,234'
-  const accuracy = 87.5
-  const weeklyGoal = 15
-  const weeklyProgressCount = 12
+  const handleSignIn = () => {
+    router.push('/auth/signin')
+  }
 
-  const stats = [
-    { label: 'Problems Solved', value: solved, icon: CheckCircle, color: 'text-success-600', change: '+3 this week' },
-    { label: 'Current Streak', value: `${streak} days`, icon: Zap, color: 'text-warning-600', change: '+2 days' },
-    { label: 'Total Time', value: totalTime, icon: Clock, color: 'text-primary-600', change: '+2h 30m' },
-    { label: 'Global Ranking', value: ranking, icon: Award, color: 'text-purple-600', change: '+45 positions' },
-  ]
+  const handleSignUp = () => {
+    router.push('/auth/signup')
+  }
 
-  const recentActivity = [
-    { type: 'solved', problem: 'Two Sum', difficulty: 'Easy', time: '2 hours ago', timeTaken: '15m' },
-    { type: 'solved', problem: 'Valid Parentheses', difficulty: 'Easy', time: '1 day ago', timeTaken: '12m' },
-    { type: 'attempted', problem: 'Container With Most Water', difficulty: 'Medium', time: '2 days ago', timeTaken: '25m' },
-    { type: 'solved', problem: 'Merge Two Sorted Lists', difficulty: 'Easy', time: '3 days ago', timeTaken: '18m' },
-    { type: 'unsolved', problem: 'Longest Substring Without Repeating Characters', difficulty: 'Medium', time: '4 days ago', timeTaken: '30m' },
-  ]
+  // Get real stats from user progress
+  const getStats = () => {
+    if (!userProgress) {
+      return {
+        total: problems.length,
+        easy: problems.filter(p => p.difficulty === 'Easy').length,
+        medium: problems.filter(p => p.difficulty === 'Medium').length,
+        hard: problems.filter(p => p.difficulty === 'Hard').length,
+        solved: 0,
+        attempted: 0,
+        streak: 0,
+        totalTime: '0h 0m',
+        ranking: '#N/A',
+        accuracy: 0,
+        weeklyGoal: 15,
+        weeklyProgressCount: 0
+      }
+    }
 
-  const learningPath = [
-    { topic: 'Arrays & Linked Lists', status: 'completed', progress: 100 },
-    { topic: 'Stacks & Queues', status: 'completed', progress: 100 },
-    { topic: 'Trees & Graphs', status: 'in-progress', progress: 75 },
-    { topic: 'Dynamic Programming', status: 'in-progress', progress: 45 },
-    { topic: 'System Design', status: 'not-started', progress: 0 },
-  ]
+    const total = problems.length
+    const solved = userProgress.problemsSolved.length
+    const attempted = userProgress.problemsAttempted.length
+    const streak = userProgress.currentStreak
+    const totalTimeHours = Math.floor(userProgress.totalTime / 3600)
+    const totalTimeMinutes = Math.floor((userProgress.totalTime % 3600) / 60)
+    const totalTime = `${totalTimeHours}h ${totalTimeMinutes}m`
+    const ranking = '#1,234' // Mock ranking for now
+    const accuracy = userProgress.accuracy
+    const weeklyGoal = userProgress.weeklyGoal
+    const weeklyProgressCount = userProgress.weeklyProgress
 
-  const weeklyProgressData = [
-    { day: 'Mon', solved: 3, goal: 3 },
-    { day: 'Tue', solved: 2, goal: 3 },
-    { day: 'Wed', solved: 4, goal: 3 },
-    { day: 'Thu', solved: 1, goal: 3 },
-    { day: 'Fri', solved: 2, goal: 3 },
-    { day: 'Sat', solved: 0, goal: 3 },
-    { day: 'Sun', solved: 0, goal: 3 },
-  ]
+    return {
+      total,
+      easy: problems.filter(p => p.difficulty === 'Easy').length,
+      medium: problems.filter(p => p.difficulty === 'Medium').length,
+      hard: problems.filter(p => p.difficulty === 'Hard').length,
+      solved,
+      attempted,
+      streak,
+      totalTime,
+      ranking,
+      accuracy,
+      weeklyGoal,
+      weeklyProgressCount
+    }
+  }
+
+  const stats = getStats()
+
+  const recentActivity = userProgress?.recentActivity.slice(0, 5).map(activity => ({
+    type: activity.type,
+    problem: activity.problemName || 'Unknown Problem',
+    difficulty: activity.difficulty || 'Unknown',
+    time: formatTimeAgo(activity.timestamp),
+    timeTaken: activity.timeTaken ? `${Math.floor(activity.timeTaken / 60)}m` : 'Unknown'
+  })) || []
+
+  const learningPath = (() => {
+    if (!userProgress) {
+      return [
+        { topic: 'Arrays & Linked Lists', status: 'not-started', progress: 0 },
+        { topic: 'Stacks & Queues', status: 'not-started', progress: 0 },
+        { topic: 'Trees & Graphs', status: 'not-started', progress: 0 },
+        { topic: 'Dynamic Programming', status: 'not-started', progress: 0 },
+        { topic: 'System Design', status: 'not-started', progress: 0 },
+      ]
+    }
+
+    // Calculate progress based on solved problems by topic
+    const topicProgress = userProgress.learningPathProgress || {}
+    const totalProblems = problems.length
+    const solvedProblems = userProgress.problemsSolved.length
+    
+    return [
+      { 
+        topic: 'Arrays & Linked Lists', 
+        status: topicProgress['Arrays & Linked Lists'] ? 'completed' : solvedProblems > 0 ? 'in-progress' : 'not-started', 
+        progress: topicProgress['Arrays & Linked Lists'] || (solvedProblems > 0 ? Math.min(25, (solvedProblems / totalProblems) * 100) : 0)
+      },
+      { 
+        topic: 'Stacks & Queues', 
+        status: topicProgress['Stacks & Queues'] ? 'completed' : solvedProblems > 2 ? 'in-progress' : 'not-started', 
+        progress: topicProgress['Stacks & Queues'] || (solvedProblems > 2 ? Math.min(50, (solvedProblems / totalProblems) * 100) : 0)
+      },
+      { 
+        topic: 'Trees & Graphs', 
+        status: topicProgress['Trees & Graphs'] ? 'completed' : solvedProblems > 5 ? 'in-progress' : 'not-started', 
+        progress: topicProgress['Trees & Graphs'] || (solvedProblems > 5 ? Math.min(75, (solvedProblems / totalProblems) * 100) : 0)
+      },
+      { 
+        topic: 'Dynamic Programming', 
+        status: topicProgress['Dynamic Programming'] ? 'completed' : solvedProblems > 8 ? 'in-progress' : 'not-started', 
+        progress: topicProgress['Dynamic Programming'] || (solvedProblems > 8 ? Math.min(45, (solvedProblems / totalProblems) * 100) : 0)
+      },
+      { 
+        topic: 'System Design', 
+        status: topicProgress['System Design'] ? 'completed' : solvedProblems > 10 ? 'in-progress' : 'not-started', 
+        progress: topicProgress['System Design'] || (solvedProblems > 10 ? Math.min(20, (solvedProblems / totalProblems) * 100) : 0)
+      },
+    ]
+  })()
+
+  const weeklyProgressData = (() => {
+    if (!userProgress?.recentActivity) {
+      return [
+        { day: 'Mon', solved: 0, goal: stats.weeklyGoal },
+        { day: 'Tue', solved: 0, goal: stats.weeklyGoal },
+        { day: 'Wed', solved: 0, goal: stats.weeklyGoal },
+        { day: 'Thu', solved: 0, goal: stats.weeklyGoal },
+        { day: 'Fri', solved: 0, goal: stats.weeklyGoal },
+        { day: 'Sat', solved: 0, goal: stats.weeklyGoal },
+        { day: 'Sun', solved: 0, goal: stats.weeklyGoal },
+      ]
+    }
+
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    const weekData = days.map(day => ({ day, solved: 0, goal: stats.weeklyGoal }))
+    
+    // Count solves by day of the week for the last 7 days
+    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    userProgress.recentActivity
+      .filter(activity => activity.type === 'solve' && new Date(activity.timestamp) > oneWeekAgo)
+      .forEach(activity => {
+        const dayOfWeek = new Date(activity.timestamp).getDay()
+        weekData[dayOfWeek].solved++
+      })
+    
+    return weekData
+  })()
+
+  const formatTimeAgo = (timestamp: string) => {
+    const now = new Date()
+    const activityTime = new Date(timestamp)
+    const diffInHours = Math.floor((now.getTime() - activityTime.getTime()) / (1000 * 60 * 60))
+    
+    if (diffInHours < 1) return 'Just now'
+    if (diffInHours < 24) return `${diffInHours} hours ago`
+    const diffInDays = Math.floor(diffInHours / 24)
+    return `${diffInDays} days ago`
+  }
 
   const getActivityIcon = (type: string) => {
     switch (type) {
-      case 'solved':
+      case 'solve':
         return <CheckCircle className="h-4 w-4 text-success-600" />
-      case 'attempted':
+      case 'attempt':
         return <Clock className="h-4 w-4 text-warning-600" />
-      case 'unsolved':
-        return <Target className="h-4 w-4 text-gray-400" />
       default:
-        return <Activity className="h-4 w-4 text-gray-400" />
+        return <Target className="h-4 w-4 text-gray-400" />
     }
   }
 
@@ -130,18 +241,88 @@ export default function Home() {
     )
   }
 
+  // Show sign-in prompt if not authenticated
+  if (status === 'unauthenticated') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="w-16 h-16 bg-primary-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Users className="h-8 w-8 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome to Competitive Programming Hub</h1>
+          <p className="text-gray-600 mb-6">Sign in to track your progress and access personalized features</p>
+          <div className="space-y-3">
+            <button
+              onClick={handleSignIn}
+              className="w-full bg-primary-600 text-white py-2 px-4 rounded-lg hover:bg-primary-700 transition-colors"
+            >
+              Sign In
+            </button>
+            <button
+              onClick={handleSignUp}
+              className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              Create Account
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const statsData = [
+    { 
+      label: 'Problems Solved', 
+      value: stats.solved, 
+      icon: CheckCircle, 
+      color: 'text-success-600', 
+      change: userProgress?.recentActivity ? 
+        `${userProgress.recentActivity.filter(a => a.type === 'solve' && new Date(a.timestamp) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length} this week` :
+        'No solves this week'
+    },
+    { 
+      label: 'Current Streak', 
+      value: `${stats.streak} days`, 
+      icon: Zap, 
+      color: 'text-warning-600', 
+      change: stats.streak > 0 ? `+${stats.streak} day${stats.streak > 1 ? 's' : ''} streak` : 'No active streak'
+    },
+    { 
+      label: 'Total Time', 
+      value: stats.totalTime, 
+      icon: Clock, 
+      color: 'text-primary-600', 
+      change: userProgress?.totalTime && userProgress.totalTime > 0 ? 
+        `${Math.floor(userProgress.totalTime / 3600)}h ${Math.floor((userProgress.totalTime % 3600) / 60)}m total` : 
+        'No time tracked'
+    },
+    { 
+      label: 'Accuracy Rate', 
+      value: `${stats.accuracy.toFixed(1)}%`, 
+      icon: Award, 
+      color: 'text-purple-600', 
+      change: stats.accuracy > 0 ? `${stats.solved} solved, ${stats.attempted} attempted` : 'No problems attempted'
+    },
+  ]
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back, Coder!</h1>
-          <p className="text-gray-600">You have solved <span className="font-semibold text-primary-600">{solved}</span> out of <span className="font-semibold text-primary-600">{total}</span> problems. Keep up the streak!</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back, {session?.user?.name || 'Coder'}!</h1>
+          <p className="text-gray-600">
+            {stats.solved > 0 ? (
+              <>You have solved <span className="font-semibold text-primary-600">{stats.solved}</span> out of <span className="font-semibold text-primary-600">{stats.total}</span> problems. {stats.streak > 0 ? `Keep up your ${stats.streak}-day streak!` : 'Start solving problems to build your streak!'}</>
+            ) : (
+              <>You haven't solved any problems yet. <span className="font-semibold text-primary-600">Start practicing</span> to track your progress!</>
+            )}
+          </p>
         </div>
 
         {/* Enhanced Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat, index) => (
+          {statsData.map((stat, index) => (
             <div 
               key={index} 
               className="card hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-105"
@@ -170,66 +351,66 @@ export default function Home() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="card p-6 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-105" onClick={handleViewContests}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <button
+            onClick={() => router.push('/practice/enhanced')}
+            className="card hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-105"
+          >
             <div className="flex items-center space-x-3">
-              <div className="p-3 bg-blue-500 rounded-lg">
-                <Play className="h-6 w-6 text-white" />
+              <div className="p-2 bg-primary-100 rounded-lg">
+                <Play className="h-6 w-6 text-primary-600" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Live Contests</h3>
-                <p className="text-sm text-gray-600">Join real-time coding competitions</p>
+                <h3 className="font-semibold text-gray-900">Start Practice</h3>
+                <p className="text-sm text-gray-600">Solve problems</p>
               </div>
             </div>
-            <div className="mt-4">
-              <button className="btn-primary w-full">View Contests</button>
-            </div>
-          </div>
+          </button>
 
-          <div className="card p-6 bg-gradient-to-br from-green-50 to-green-100 border-green-200 hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-105" onClick={handleWatchVideos}>
+          <button
+            onClick={handleViewContests}
+            className="card hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-105"
+          >
             <div className="flex items-center space-x-3">
-              <div className="p-3 bg-green-500 rounded-lg">
-                <Video className="h-6 w-6 text-white" />
+              <div className="p-2 bg-warning-100 rounded-lg">
+                <Trophy className="h-6 w-6 text-warning-600" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Video Explanations</h3>
-                <p className="text-sm text-gray-600">Learn from expert instructors</p>
+                <h3 className="font-semibold text-gray-900">Join Contest</h3>
+                <p className="text-sm text-gray-600">Compete live</p>
               </div>
             </div>
-            <div className="mt-4">
-              <button className="btn-primary w-full">Watch Videos</button>
-            </div>
-          </div>
+          </button>
 
-          <div className="card p-6 bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-105" onClick={handleViewAnalytics}>
+          <button
+            onClick={handleWatchVideos}
+            className="card hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-105"
+          >
             <div className="flex items-center space-x-3">
-              <div className="p-3 bg-purple-500 rounded-lg">
-                <BarChart3 className="h-6 w-6 text-white" />
+              <div className="p-2 bg-success-100 rounded-lg">
+                <Video className="h-6 w-6 text-success-600" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Analytics</h3>
-                <p className="text-sm text-gray-600">Track your progress & insights</p>
+                <h3 className="font-semibold text-gray-900">Watch Videos</h3>
+                <p className="text-sm text-gray-600">Learn concepts</p>
               </div>
             </div>
-            <div className="mt-4">
-              <button className="btn-primary w-full">View Analytics</button>
-            </div>
-          </div>
+          </button>
 
-          <div className="card p-6 bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-105" onClick={() => router.push('/practice/enhanced')}>
+          <button
+            onClick={handleViewAnalytics}
+            className="card hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-105"
+          >
             <div className="flex items-center space-x-3">
-              <div className="p-3 bg-orange-500 rounded-lg">
-                <BookOpen className="h-6 w-6 text-white" />
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <BarChart3 className="h-6 w-6 text-purple-600" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Practice Problems</h3>
-                <p className="text-sm text-gray-600">Solve coding challenges</p>
+                <h3 className="font-semibold text-gray-900">View Analytics</h3>
+                <p className="text-sm text-gray-600">Track progress</p>
               </div>
             </div>
-            <div className="mt-4">
-              <button className="btn-primary w-full">Start Practice</button>
-            </div>
-          </div>
+          </button>
         </div>
 
         {/* Weekly Progress */}
@@ -237,8 +418,8 @@ export default function Home() {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-gray-900">Weekly Progress</h2>
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600">Goal: {weeklyGoal} problems</span>
-              <span className="text-sm font-medium text-primary-600">{weeklyProgressCount}/{weeklyGoal}</span>
+              <span className="text-sm text-gray-600">Goal: {stats.weeklyGoal} problems</span>
+              <span className="text-sm font-medium text-primary-600">{stats.weeklyProgressCount}/{stats.weeklyGoal}</span>
             </div>
           </div>
           <div className="flex items-end justify-between space-x-2">
@@ -272,81 +453,47 @@ export default function Home() {
         </div>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Problem Breakdown */}
-          <div className="card">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Problem Breakdown</h2>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-success-500 rounded-full"></div>
-                  <span>Easy</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-success-600 font-bold">{easy}</span>
-                  <span className="text-sm text-gray-500">({Math.round((easy/total)*100)}%)</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-warning-500 rounded-full"></div>
-                  <span>Medium</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-warning-600 font-bold">{medium}</span>
-                  <span className="text-sm text-gray-500">({Math.round((medium/total)*100)}%)</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-danger-500 rounded-full"></div>
-                  <span>Hard</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-danger-600 font-bold">{hard}</span>
-                  <span className="text-sm text-gray-500">({Math.round((hard/total)*100)}%)</span>
-                </div>
-              </div>
-            </div>
-            
-            {/* Accuracy Chart */}
-            <div className="mt-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-700">Accuracy</span>
-                <span className="text-sm font-bold text-primary-600">{accuracy}%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
-                  className="bg-primary-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${accuracy}%` }}
-                ></div>
-              </div>
-            </div>
-          </div>
-
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Recent Activity */}
           <div className="card">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
             <div className="space-y-3">
-              {recentActivity.map((activity, index) => (
-                <div 
-                  key={index} 
-                  className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"
-                  onClick={() => router.push('/practice/enhanced')}
-                >
-                  {getActivityIcon(activity.type)}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{activity.problem}</p>
-                    <div className="flex items-center space-x-2 text-xs text-gray-500">
-                      <span className={getDifficultyColor(activity.difficulty)}>{activity.difficulty}</span>
-                      <span>•</span>
-                      <span>{activity.timeTaken}</span>
-                      <span>•</span>
-                      <span>{activity.time}</span>
+              {recentActivity.length > 0 ? (
+                recentActivity.map((activity, index) => (
+                  <div 
+                    key={index} 
+                    className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => router.push('/practice/enhanced')}
+                  >
+                    {getActivityIcon(activity.type)}
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-medium text-gray-900">{activity.problem}</span>
+                        <span className={`text-xs px-2 py-1 rounded ${getDifficultyColor(activity.difficulty)}`}>
+                          {activity.difficulty}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2 text-xs text-gray-500">
+                        <span>{activity.time}</span>
+                        <span>•</span>
+                        <span>{activity.timeTaken}</span>
+                      </div>
                     </div>
                   </div>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <Activity className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-500">No recent activity</p>
+                  <p className="text-sm text-gray-400 mb-3">Start solving problems to see your activity here</p>
+                  <button
+                    onClick={() => router.push('/practice/enhanced')}
+                    className="text-primary-600 hover:text-primary-700 font-medium"
+                  >
+                    Start practicing →
+                  </button>
                 </div>
-              ))}
+              )}
             </div>
             <div className="mt-4 pt-4 border-t border-gray-200">
               <button 
@@ -398,19 +545,22 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Enhanced Analytics Section */}
-        <div className="mt-8">
-          <AnalyticsDashboard />
-        </div>
+        {/* Enhanced Features */}
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="card">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Live Contests</h3>
+            <ContestSystem activeContests={[]} />
+          </div>
 
-        {/* Live Contests Section */}
-        <div className="mt-8">
-          <ContestSystem />
-        </div>
+          <div className="card">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Video Explanations</h3>
+            <VideoExplanations />
+          </div>
 
-        {/* Video Explanations Section */}
-        <div className="mt-8">
-          <VideoExplanations />
+          <div className="card">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Analytics Dashboard</h3>
+            <AnalyticsDashboard />
+          </div>
         </div>
       </div>
     </div>

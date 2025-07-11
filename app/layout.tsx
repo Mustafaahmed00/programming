@@ -3,6 +3,8 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import Link from 'next/link'
 import { User, Bell, Settings, LogOut, Sun, Moon, Play, Video, BarChart3 } from 'lucide-react'
+import Providers from '@/components/Providers'
+import UserMenu from '@/components/UserMenu'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -13,19 +15,16 @@ export const metadata: Metadata = {
 }
 
 const navLinks = [
-  { href: '/', label: 'Dashboard' },
-  { href: '/problems', label: 'Problems' },
-  { href: '/practice', label: 'Practice' },
-  { href: '/practice/enhanced', label: 'Enhanced Practice', icon: Play },
-  { href: '/contests', label: 'Contests', icon: Play },
-  { href: '/videos', label: 'Video Explanations', icon: Video },
+  { href: '/', label: 'Dashboard', icon: null },
+  { href: '/practice/enhanced', label: 'Practice', icon: Play },
+  { href: '/problems', label: 'Problems', icon: null },
+  { href: '/study-plans', label: 'Study Plans', icon: null },
+  { href: '/courses', label: 'Courses', icon: Video },
+  { href: '/contests', label: 'Contests', icon: null },
+  { href: '/companies', label: 'Companies', icon: null },
   { href: '/analytics', label: 'Analytics', icon: BarChart3 },
-  { href: '/study-plans', label: 'Study Plans' },
-  { href: '/courses', label: 'Courses' },
-  { href: '/companies', label: 'Companies' },
-  { href: '/leaderboard', label: 'Leaderboard' },
-  { href: '/forum', label: 'Forum' },
-  { href: '/competitive-programmers', label: 'Champions' },
+  { href: '/leaderboard', label: 'Leaderboard', icon: null },
+  { href: '/community', label: 'Community', icon: null },
 ]
 
 export default function RootLayout({
@@ -35,88 +34,85 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        {/* Preload critical resources */}
+        <link rel="preload" href="/auth/signup" as="fetch" crossOrigin="anonymous" />
+        <link rel="preload" href="/auth/signin" as="fetch" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      </head>
       <body className={inter.className}>
-        <nav className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-sm">
-          <div className="flex items-center gap-6">
-            <Link href="/" className="font-bold text-primary-700 text-xl">CP Hub</Link>
-            <div className="hidden lg:flex items-center gap-1">
-              {navLinks.map(link => (
+        <Providers>
+          {/* Navigation */}
+          <nav className="bg-white border-b border-gray-200">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex justify-between h-16">
+                {/* Logo and main nav */}
+                <div className="flex items-center">
+                  <Link href="/" className="flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
+                      <span className="text-white font-bold text-sm">CP</span>
+                    </div>
+                    <span className="font-bold text-xl text-gray-900">Competitive Programming Hub</span>
+                  </Link>
+                  
+                  {/* Desktop Navigation */}
+                  <div className="hidden lg:flex ml-10 space-x-8">
+                    {navLinks.slice(1, 8).map(link => (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1"
+                        prefetch={true}
+                      >
+                        {link.icon && <link.icon className="h-4 w-4" />}
+                        {link.label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Right side - notifications and user menu */}
+                <div className="flex items-center space-x-4">
+                  {/* Notifications */}
+                  <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+                    <Bell className="h-5 w-5" />
+                  </button>
+
+                  {/* Theme toggle */}
+                  <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+                    <Sun className="h-5 w-5" />
+                  </button>
+
+                  {/* User menu */}
+                  <UserMenu />
+                </div>
+              </div>
+            </div>
+          </nav>
+          
+          {/* Mobile Navigation */}
+          <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-2">
+            <div className="flex items-center gap-2 overflow-x-auto">
+              {navLinks.slice(1, 8).map(link => (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md transition-colors font-medium text-sm flex items-center gap-1"
+                  className="text-gray-700 hover:text-primary-600 px-3 py-1 rounded-md transition-colors font-medium text-sm whitespace-nowrap flex items-center gap-1"
                   prefetch={true}
                 >
-                  {link.icon && <link.icon className="h-4 w-4" />}
+                  {link.icon && <link.icon className="h-3 w-3" />}
                   {link.label}
                 </Link>
               ))}
             </div>
           </div>
           
-          <div className="flex items-center gap-3">
-            {/* Theme Toggle */}
-            <button className="p-2 text-gray-600 hover:text-gray-800 transition-colors">
-              <Sun className="h-5 w-5" />
-            </button>
-            
-            {/* Notifications */}
-            <button className="p-2 text-gray-600 hover:text-gray-800 transition-colors relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">3</span>
-            </button>
-            
-            {/* User Menu */}
-            <div className="relative group">
-              <button className="flex items-center gap-2 p-2 text-gray-600 hover:text-gray-800 transition-colors">
-                <div className="h-8 w-8 bg-primary-100 rounded-full flex items-center justify-center">
-                  <User className="h-4 w-4 text-primary-600" />
-                </div>
-                <span className="hidden sm:block text-sm font-medium">John Doe</span>
-              </button>
-              
-              {/* Dropdown Menu */}
-              <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                <div className="py-2">
-                  <Link href="/profile" className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors">
-                    <User className="h-4 w-4" />
-                    <span>Profile</span>
-                  </Link>
-                  <Link href="/settings" className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors">
-                    <Settings className="h-4 w-4" />
-                    <span>Settings</span>
-                  </Link>
-                  <hr className="my-1" />
-                  <button className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors w-full text-left">
-                    <LogOut className="h-4 w-4" />
-                    <span>Logout</span>
-                  </button>
-                </div>
-              </div>
-            </div>
+          <div className="min-h-screen bg-gray-50">
+            {children}
           </div>
-        </nav>
-        
-        {/* Mobile Navigation */}
-        <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-2">
-          <div className="flex items-center gap-2 overflow-x-auto">
-            {navLinks.slice(1, 8).map(link => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-gray-700 hover:text-primary-600 px-3 py-1 rounded-md transition-colors font-medium text-sm whitespace-nowrap flex items-center gap-1"
-                prefetch={true}
-              >
-                {link.icon && <link.icon className="h-3 w-3" />}
-                {link.label}
-              </Link>
-            ))}
-          </div>
-        </div>
-        
-        <div className="min-h-screen bg-gray-50">
-          {children}
-        </div>
+        </Providers>
       </body>
     </html>
   )
