@@ -79,6 +79,18 @@ export default function Home() {
     }
   }
 
+  const handleStatCardClick = (label: string) => {
+    handleStatsClick(label)
+  }
+
+  const handleStatClick = (label: string) => {
+    handleStatCardClick(label)
+  }
+
+  const handleStatCardClickDirect = (stat: any) => {
+    handleStatsClick(stat.label)
+  }
+
   const handleWeeklyProgressClick = () => {
     router.push('/practice/enhanced')
   }
@@ -366,7 +378,7 @@ export default function Home() {
             <div 
               key={index} 
               className="card hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-105"
-              onClick={() => handleStatsClick(stat.label)}
+              onClick={handleStatCardClickDirect.bind(null, stat)}
             >
               <div className="flex items-center justify-between">
                 <div>
