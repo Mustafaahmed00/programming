@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import Link from 'next/link'
-import { User, Bell, Settings, LogOut, Sun, Moon } from 'lucide-react'
+import { User, Bell, Settings, LogOut, Sun, Moon, Play, Video, BarChart3 } from 'lucide-react'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -16,6 +16,10 @@ const navLinks = [
   { href: '/', label: 'Dashboard' },
   { href: '/problems', label: 'Problems' },
   { href: '/practice', label: 'Practice' },
+  { href: '/practice/enhanced', label: 'Enhanced Practice', icon: Play },
+  { href: '/contests', label: 'Contests', icon: Play },
+  { href: '/videos', label: 'Video Explanations', icon: Video },
+  { href: '/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/study-plans', label: 'Study Plans' },
   { href: '/courses', label: 'Courses' },
   { href: '/companies', label: 'Companies' },
@@ -35,14 +39,15 @@ export default function RootLayout({
         <nav className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-sm">
           <div className="flex items-center gap-6">
             <Link href="/" className="font-bold text-primary-700 text-xl">CP Hub</Link>
-            <div className="hidden md:flex items-center gap-1">
+            <div className="hidden lg:flex items-center gap-1">
               {navLinks.map(link => (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md transition-colors font-medium text-sm"
+                  className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md transition-colors font-medium text-sm flex items-center gap-1"
                   prefetch={true}
                 >
+                  {link.icon && <link.icon className="h-4 w-4" />}
                   {link.label}
                 </Link>
               ))}
@@ -93,15 +98,16 @@ export default function RootLayout({
         </nav>
         
         {/* Mobile Navigation */}
-        <div className="md:hidden bg-white border-b border-gray-200 px-4 py-2">
+        <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-2">
           <div className="flex items-center gap-2 overflow-x-auto">
-            {navLinks.slice(1).map(link => (
+            {navLinks.slice(1, 8).map(link => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-gray-700 hover:text-primary-600 px-3 py-1 rounded-md transition-colors font-medium text-sm whitespace-nowrap"
+                className="text-gray-700 hover:text-primary-600 px-3 py-1 rounded-md transition-colors font-medium text-sm whitespace-nowrap flex items-center gap-1"
                 prefetch={true}
               >
+                {link.icon && <link.icon className="h-3 w-3" />}
                 {link.label}
               </Link>
             ))}

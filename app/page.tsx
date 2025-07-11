@@ -1,9 +1,22 @@
 'use client'
 
-import { CheckCircle, Zap, Clock, Award, TrendingUp, Target, Calendar, BarChart3, Activity, BookOpen, Users, Star, Trophy } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { CheckCircle, Zap, Clock, Award, TrendingUp, Target, Calendar, BarChart3, Activity, BookOpen, Users, Star, Trophy, Play, Video, Users2 } from 'lucide-react'
 import { problems } from '@/data/problems'
+import dynamic from 'next/dynamic'
+
+// Dynamically import components with no SSR to avoid hydration issues
+const AnalyticsDashboard = dynamic(() => import('@/components/AnalyticsDashboard'), { ssr: false })
+const ContestSystem = dynamic(() => import('@/components/ContestSystem'), { ssr: false })
+const VideoExplanations = dynamic(() => import('@/components/VideoExplanations'), { ssr: false })
 
 export default function Home() {
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
   // Simulate user stats based on problems data
   const total = problems.length
   const easy = problems.filter(p => p.difficulty === 'Easy').length
@@ -90,6 +103,18 @@ export default function Home() {
     }
   }
 
+  // Show loading state until client-side hydration is complete
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-6">
@@ -99,7 +124,7 @@ export default function Home() {
           <p className="text-gray-600">You have solved <span className="font-semibold text-primary-600">{solved}</span> out of <span className="font-semibold text-primary-600">{total}</span> problems. Keep up the streak!</p>
         </div>
 
-        {/* Stats Grid */}
+        {/* Enhanced Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {stats.map((stat, index) => (
             <div key={index} className="card">
@@ -113,6 +138,54 @@ export default function Home() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="card p-6 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+            <div className="flex items-center space-x-3">
+              <div className="p-3 bg-blue-500 rounded-lg">
+                <Play className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Live Contests</h3>
+                <p className="text-sm text-gray-600">Join real-time coding competitions</p>
+              </div>
+            </div>
+            <div className="mt-4">
+              <button className="btn-primary w-full">View Contests</button>
+            </div>
+          </div>
+
+          <div className="card p-6 bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+            <div className="flex items-center space-x-3">
+              <div className="p-3 bg-green-500 rounded-lg">
+                <Video className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Video Explanations</h3>
+                <p className="text-sm text-gray-600">Learn from expert instructors</p>
+              </div>
+            </div>
+            <div className="mt-4">
+              <button className="btn-primary w-full">Watch Videos</button>
+            </div>
+          </div>
+
+          <div className="card p-6 bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+            <div className="flex items-center space-x-3">
+              <div className="p-3 bg-purple-500 rounded-lg">
+                <BarChart3 className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Analytics</h3>
+                <p className="text-sm text-gray-600">Track your progress & insights</p>
+              </div>
+            </div>
+            <div className="mt-4">
+              <button className="btn-primary w-full">View Analytics</button>
+            </div>
+          </div>
         </div>
 
         {/* Weekly Progress */}
@@ -200,150 +273,64 @@ export default function Home() {
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
             <div className="space-y-3">
               {recentActivity.map((activity, index) => (
-                <div key={index} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50">
+                <div key={index} className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded-lg transition-colors">
                   {getActivityIcon(activity.type)}
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium text-gray-900">{activity.problem}</span>
-                      <span className={`text-xs font-medium ${getDifficultyColor(activity.difficulty)}`}>
-                        {activity.difficulty}
-                      </span>
-                    </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{activity.problem}</p>
                     <div className="flex items-center space-x-2 text-xs text-gray-500">
-                      <span>{activity.time}</span>
+                      <span className={getDifficultyColor(activity.difficulty)}>{activity.difficulty}</span>
                       <span>•</span>
                       <span>{activity.timeTaken}</span>
+                      <span>•</span>
+                      <span>{activity.time}</span>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-            <button className="w-full mt-4 text-sm text-primary-600 hover:text-primary-700 font-medium">
-              View All Activity →
-            </button>
           </div>
 
-          {/* Learning Path */}
+          {/* Learning Path Progress */}
           <div className="card">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Learning Path</h2>
             <div className="space-y-4">
-              {learningPath.map((item, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      {item.status === 'completed' && <CheckCircle className="h-4 w-4 text-success-600" />}
-                      {item.status === 'in-progress' && <Clock className="h-4 w-4 text-warning-600" />}
-                      {item.status === 'not-started' && <Target className="h-4 w-4 text-gray-400" />}
-                      <span className={`font-medium ${getStatusColor(item.status)}`}>{item.topic}</span>
-                    </div>
-                    <span className="text-sm text-gray-500">{item.progress}%</span>
+              {learningPath.map((path, index) => (
+                <div key={index}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-700">{path.topic}</span>
+                    <span className={`text-xs font-medium ${getStatusColor(path.status)}`}>
+                      {path.progress}%
+                    </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div 
                       className={`h-2 rounded-full transition-all duration-300 ${
-                        item.status === 'completed' ? 'bg-success-600' :
-                        item.status === 'in-progress' ? 'bg-warning-600' : 'bg-gray-300'
+                        path.status === 'completed' ? 'bg-success-500' :
+                        path.status === 'in-progress' ? 'bg-warning-500' :
+                        'bg-gray-300'
                       }`}
-                      style={{ width: `${item.progress}%` }}
+                      style={{ width: `${path.progress}%` }}
                     ></div>
                   </div>
                 </div>
               ))}
             </div>
-            <button className="w-full mt-4 text-sm text-primary-600 hover:text-primary-700 font-medium">
-              Continue Learning →
-            </button>
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="card text-center hover:shadow-lg transition-shadow cursor-pointer">
-            <Target className="h-8 w-8 text-primary-600 mx-auto mb-3" />
-            <h3 className="font-semibold text-gray-900 mb-1">Practice Mode</h3>
-            <p className="text-sm text-gray-600">Solve problems with timer</p>
-          </div>
-          <div className="card text-center hover:shadow-lg transition-shadow cursor-pointer">
-            <BookOpen className="h-8 w-8 text-success-600 mx-auto mb-3" />
-            <h3 className="font-semibold text-gray-900 mb-1">Study Plans</h3>
-            <p className="text-sm text-gray-600">Structured learning paths</p>
-          </div>
-          <div className="card text-center hover:shadow-lg transition-shadow cursor-pointer">
-            <Users className="h-8 w-8 text-purple-600 mx-auto mb-3" />
-            <h3 className="font-semibold text-gray-900 mb-1">Community</h3>
-            <p className="text-sm text-gray-600">Connect with coders</p>
-          </div>
-          <div className="card text-center hover:shadow-lg transition-shadow cursor-pointer">
-            <Star className="h-8 w-8 text-warning-600 mx-auto mb-3" />
-            <h3 className="font-semibold text-gray-900 mb-1">Leaderboard</h3>
-            <p className="text-sm text-gray-600">Compete and rank up</p>
-          </div>
-        </div>
-
-        {/* Learn from Champions */}
+        {/* Enhanced Analytics Section */}
         <div className="mt-8">
-          <div className="card bg-gradient-to-r from-purple-500 to-pink-600 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold mb-2">Learn from Champions</h2>
-                <p className="text-purple-100 mb-4">Discover how top competitive programmers think and approach problems</p>
-                <button className="px-6 py-3 bg-white text-purple-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors">
-                  Explore Champions →
-                </button>
-              </div>
-              <div className="hidden md:block">
-                <div className="flex items-center space-x-2 text-purple-100">
-                  <Trophy className="h-8 w-8" />
-                  <div>
-                    <div className="text-sm font-medium">Petr, Tourist, rng_58</div>
-                    <div className="text-xs">World Champions</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <AnalyticsDashboard />
         </div>
 
-        {/* Performance Insights */}
+        {/* Live Contests Section */}
         <div className="mt-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Performance Insights</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="card">
-              <div className="flex items-center space-x-3 mb-4">
-                <TrendingUp className="h-6 w-6 text-success-600" />
-                <h3 className="text-lg font-semibold text-gray-900">Improving</h3>
-              </div>
-              <p className="text-gray-600 text-sm mb-3">Your problem-solving speed has improved by 15% this week</p>
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-success-600 font-medium">+15%</span>
-                <span className="text-xs text-gray-500">vs last week</span>
-              </div>
-            </div>
-            
-            <div className="card">
-              <div className="flex items-center space-x-3 mb-4">
-                <BarChart3 className="h-6 w-6 text-primary-600" />
-                <h3 className="text-lg font-semibold text-gray-900">Streak Goal</h3>
-              </div>
-              <p className="text-gray-600 text-sm mb-3">You're 3 days away from your 10-day streak goal</p>
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-primary-600 font-medium">7/10 days</span>
-                <span className="text-xs text-gray-500">current streak</span>
-              </div>
-            </div>
-            
-            <div className="card">
-              <div className="flex items-center space-x-3 mb-4">
-                <Calendar className="h-6 w-6 text-purple-600" />
-                <h3 className="text-lg font-semibold text-gray-900">Weekly Target</h3>
-              </div>
-              <p className="text-gray-600 text-sm mb-3">You're on track to meet your weekly goal</p>
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-purple-600 font-medium">80%</span>
-                <span className="text-xs text-gray-500">goal completion</span>
-              </div>
-            </div>
-          </div>
+          <ContestSystem />
+        </div>
+
+        {/* Video Explanations Section */}
+        <div className="mt-8">
+          <VideoExplanations />
         </div>
       </div>
     </div>
