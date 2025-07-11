@@ -51,6 +51,46 @@ export default function Home() {
     router.push('/auth/signup')
   }
 
+  const handleStartPractice = () => {
+    router.push('/practice/enhanced')
+  }
+
+  const handleViewAllActivity = () => {
+    router.push('/practice/enhanced')
+  }
+
+  const handleContinueLearning = () => {
+    router.push('/courses')
+  }
+
+  const handleViewDetailedProgress = () => {
+    router.push('/analytics')
+  }
+
+  const handleStatsClick = (label: string) => {
+    if (label === 'Problems Solved') {
+      router.push('/practice/enhanced')
+    } else if (label === 'Current Streak') {
+      router.push('/analytics')
+    } else if (label === 'Total Time') {
+      router.push('/analytics')
+    } else if (label === 'Global Ranking') {
+      router.push('/contests')
+    }
+  }
+
+  const handleWeeklyProgressClick = () => {
+    router.push('/practice/enhanced')
+  }
+
+  const handleRecentActivityClick = () => {
+    router.push('/practice/enhanced')
+  }
+
+  const handleLearningPathClick = () => {
+    router.push('/courses')
+  }
+
   // Get real stats from user progress
   const getStats = () => {
     if (!userProgress) {
@@ -326,17 +366,7 @@ export default function Home() {
             <div 
               key={index} 
               className="card hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-105"
-              onClick={() => {
-                if (stat.label === 'Problems Solved') {
-                  router.push('/practice/enhanced')
-                } else if (stat.label === 'Current Streak') {
-                  router.push('/analytics')
-                } else if (stat.label === 'Total Time') {
-                  router.push('/analytics')
-                } else if (stat.label === 'Global Ranking') {
-                  router.push('/contests')
-                }
-              }}
+              onClick={() => handleStatsClick(stat.label)}
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -353,7 +383,7 @@ export default function Home() {
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <button
-            onClick={() => router.push('/practice/enhanced')}
+            onClick={handleStartPractice}
             className="card hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-105"
           >
             <div className="flex items-center space-x-3">
@@ -427,7 +457,7 @@ export default function Home() {
               <div 
                 key={index} 
                 className="flex-1 text-center cursor-pointer hover:opacity-80 transition-opacity"
-                onClick={() => router.push('/practice/enhanced')}
+                onClick={handleWeeklyProgressClick}
               >
                 <div className="relative">
                   <div className="h-24 bg-gray-200 rounded-t-lg relative">
@@ -444,7 +474,7 @@ export default function Home() {
           </div>
           <div className="mt-4 pt-4 border-t border-gray-200">
             <button 
-              onClick={() => router.push('/analytics')}
+              onClick={handleViewDetailedProgress}
               className="text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors"
             >
               View Detailed Progress →
@@ -463,7 +493,7 @@ export default function Home() {
                   <div 
                     key={index} 
                     className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                    onClick={() => router.push('/practice/enhanced')}
+                    onClick={handleRecentActivityClick}
                   >
                     {getActivityIcon(activity.type)}
                     <div className="flex-1">
@@ -487,7 +517,7 @@ export default function Home() {
                   <p className="text-gray-500">No recent activity</p>
                   <p className="text-sm text-gray-400 mb-3">Start solving problems to see your activity here</p>
                   <button
-                    onClick={() => router.push('/practice/enhanced')}
+                    onClick={handleStartPractice}
                     className="text-primary-600 hover:text-primary-700 font-medium"
                   >
                     Start practicing →
@@ -497,7 +527,7 @@ export default function Home() {
             </div>
             <div className="mt-4 pt-4 border-t border-gray-200">
               <button 
-                onClick={() => router.push('/practice/enhanced')}
+                onClick={handleViewAllActivity}
                 className="text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors"
               >
                 View All Activity →
@@ -513,7 +543,7 @@ export default function Home() {
                 <div 
                   key={index} 
                   className="cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
-                  onClick={() => router.push('/courses')}
+                  onClick={handleLearningPathClick}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-gray-700">{path.topic}</span>
@@ -536,7 +566,7 @@ export default function Home() {
             </div>
             <div className="mt-4 pt-4 border-t border-gray-200">
               <button 
-                onClick={() => router.push('/courses')}
+                onClick={handleContinueLearning}
                 className="text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors"
               >
                 Continue Learning →
